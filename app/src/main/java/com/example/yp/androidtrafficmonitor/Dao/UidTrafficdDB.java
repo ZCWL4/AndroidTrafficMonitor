@@ -42,7 +42,7 @@ public class UidTrafficdDB {
     }*/
 
 
-    public static  void update (Context context, AppInfo appInfo,String DBName){
+    /*public static  void update (Context context, AppInfo appInfo,String DBName){
             DBOpenHelper dbOpenHelper = new DBOpenHelper(context, DBName);
             //dbOpenHelper.getReadableDatabase();获取只读的数据库
             SQLiteDatabase sqLiteDatabase = dbOpenHelper.getWritableDatabase();//获取可读可写的数据库
@@ -52,9 +52,9 @@ public class UidTrafficdDB {
             values.put("traffic", appInfo.traffic);
             sqLiteDatabase.update(DBName, values, "uid=?", new String[]{String.valueOf(appInfo.uid)});
             sqLiteDatabase.close();
-        }
+        }*/
 
-    public static  void insert(Context context, AppInfo appInfo, String DBName) {
+    /*public static  void insert(Context context, AppInfo appInfo, String DBName) {
         DBOpenHelper dbOpenHelper = new DBOpenHelper(context, DBName);
         //dbOpenHelper.getReadableDatabase();获取只读的数据库
         SQLiteDatabase sqLiteDatabase = dbOpenHelper.getWritableDatabase();//获取可读可写的数据库
@@ -65,10 +65,10 @@ public class UidTrafficdDB {
         values.put("traffic", appInfo.traffic);
         sqLiteDatabase.replace(DBName, null, values);
         sqLiteDatabase.close();
-    }
+    }*/
 
 
-    public static boolean isExistUid(Context context, AppInfo appInfo){
+    /*public static boolean isExistUid(Context context, AppInfo appInfo){
         boolean flag = false;
         Log.v("Flg---------------","query");
 
@@ -104,18 +104,66 @@ public class UidTrafficdDB {
         ArrayListUtil.appInfoArrayList = appInfoArrayList;
         return flag;
     }
+*/
 
-    public static void saveToMainDB(Context context, AppInfo appInfo){
+
+    public synchronized static void saveToMainDB(Context context, ArrayList<AppInfo> appInfos, String DBName){
         DBOpenHelper mainDBHelper = new DBOpenHelper(context,mainDBName);
         DBOpenHelper viceDBHelper = new DBOpenHelper(context,viceDBName);
         SQLiteDatabase mainDB = mainDBHelper.getWritableDatabase();
         SQLiteDatabase viceDB = viceDBHelper.getReadableDatabase();
-        ArrayList<AppInfo>appInfos = new ArrayList<>();
+        if(appInfos==null)
+            return;
+        for(AppInfo appInfo : appInfos){
+            Cursor cursor = viceDB.query(viceDBName, null, "uid=?",
+                    new String[]{String.valueOf(appInfo.uid)}, null, null, null);
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    //从副数据库中获取traffic
+                    appInfo.traffic += cursor.getInt(cursor.getColumnIndex("traffic"));
 
+                }
+            }
+            ContentValues values = new ContentValues();
+            values.put("uid", appInfo.uid);
+            values.put("packageName", appInfo.packageName);
+            values.put("appName", appInfo.appName);
+            values.put("traffic", appInfo.traffic);
+            //replace代表insert和update
+            mainDB.replace(DBName, null, values);
+            cursor.close();
+        }
+        ArrayListUtil.appInfoArrayList = appInfos;
+        mainDB.close();
+        viceDB.close();
+        Log.v("DataBase","更新完主数据库");
     }
 
     public static void initViceDB(Context context){
+        DBOpenHelper mainDBHelper = new DBOpenHelper(context,mainDBName);
+        DBOpenHelper viceDBHelper = new DBOpenHelper(context,viceDBName);
+        SQLiteDatabase mainDB = mainDBHelper.getReadableDatabase();
+        SQLiteDatabase viceDB = viceDBHelper.getWritableDatabase();
 
+        Cursor cursor = mainDB.query(viceDBName,null,null,null,null,null,null);
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                //从副数据库中获取traffic
+                int uid = cursor.getInt(cursor.getColumnIndex("uid"));
+                ContentValues values = new ContentValues();
+                values.put("uid", cursor.getInt(cursor.getColumnIndex("uid")));
+                values.put("packageName", cursor.getString(cursor.getColumnIndex("packageName")));
+                values.put("appName", cursor.getString(cursor.getColumnIndex("appName")));
+                values.put("traffic", cursor.getInt(cursor.getColumnIndex("appName")));
+                //replace代表insert和update
+                viceDB.replace(viceDBName, null, values);
+
+            }
+        }
+        cursor.close();
+        mainDB.close();
+        viceDB.close();
+        Log.v("DataBase","更新完副数据库");
     }
 
 }

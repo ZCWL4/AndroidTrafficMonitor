@@ -81,7 +81,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="流量警戒值" />
+                android:text="流量警戒值(M)" />
 
             <EditText
                 android:layout_width="match_parent"
@@ -100,9 +100,10 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="通用流量" />
+                android:text="通用流量(M)" />
 
             <EditText
+                android:id="@+id/genTrafficET"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:background="@drawable/edit_frame_shape"
@@ -119,7 +120,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="闲时流量" />
+                android:text="闲时流量(M)" />
 
             <EditText
                 android:layout_width="match_parent"

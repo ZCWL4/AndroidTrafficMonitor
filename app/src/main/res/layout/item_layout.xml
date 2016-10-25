@@ -29,8 +29,7 @@
         <CheckBox
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:ScaleX="2.5"
-            android:ScaleY="2.5"
+
             android:text=""
             android:layout_marginBottom="10dp"
             android:layout_marginLeft="10dp"
@@ -38,8 +37,7 @@
         <CheckBox
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:ScaleX="2.5"
-            android:ScaleY="2.5"
+
             android:text=""
             android:layout_marginBottom="10dp"
             android:id="@+id/checkBox3" />

@@ -9,15 +9,21 @@ import android.net.TrafficStats;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.example.yp.androidtrafficmonitor.ui.FloatView;
 import com.example.yp.androidtrafficmonitor.utils.TrafficUtil;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class TrafficMonitorService extends Service {
 
-    private SharedPreferences sharedPreferences;
+    private SharedPreferences sp;
     private SharedPreferences.Editor editor;
     private boolean flag = false;
     private long mobileTemp;
     private long mobileTraffic;
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -28,10 +34,13 @@ public class TrafficMonitorService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.v("TrafficService","startCommand");
-        sharedPreferences = getSharedPreferences("trafficInfor", Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
+        sp = getSharedPreferences("trafficInfor", Context.MODE_PRIVATE);
+        editor = sp.edit();
         startMonitor(this);
         //UidTrafficdDB.query(getApplicationContext());
+
+        /*FloatView view = new FloatView(this,getNetSpeed());
+        view.show();*/
         return START_STICKY;
     }
 
@@ -41,20 +50,20 @@ public class TrafficMonitorService extends Service {
 //        startService(intent);
 //    }
 
+
+
     public synchronized void startMonitor(final Context context) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (!flag) {
                     TrafficUtil.startMonitor(context);
-                    //long traffic = sharedPreferences.getLong("traffic",0)+TrafficStats.getTotalTxBytes() + TrafficStats.getTotalRxBytes();
-                    //long mobile = sharedPreferences.getLong("mobile",0)+TrafficStats.getMobileRxBytes()+TrafficStats.getMobileTxBytes();
-                    //long traffic = TrafficStats.getTotalTxBytes() + TrafficStats.getTotalRxBytes();
                     mobileTraffic = TrafficStats.getMobileRxBytes()+TrafficStats.getMobileTxBytes();
                     long mobile = mobileTraffic - mobileTemp;
                     mobileTemp = mobileTraffic;
-
-                    editor.putLong("mobile", mobile + sharedPreferences.getLong("mobile",0));
+                    int nowDay = getCurrentDay();
+                    editor.putLong("mobile", mobile + sp.getLong("mobile",0));
+                    editor.putLong(String.valueOf(nowDay),mobile+sp.getLong(String.valueOf(nowDay),0));
                     editor.commit();
                     try {
                         Thread.sleep(5000);
@@ -66,6 +75,12 @@ public class TrafficMonitorService extends Service {
                 }
             }
         }).start();
+    }
+
+    public int getCurrentDay(){
+        SimpleDateFormat sf = new SimpleDateFormat("dd");
+        Calendar c = Calendar.getInstance();
+        return Integer.valueOf(sf.format(c.getTime()));
     }
 
 }

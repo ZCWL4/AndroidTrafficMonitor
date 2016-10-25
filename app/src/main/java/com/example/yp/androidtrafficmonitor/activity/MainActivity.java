@@ -1,5 +1,6 @@
 package com.example.yp.androidtrafficmonitor.activity;
 
+import android.app.ActivityManager;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -10,6 +11,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,16 +22,25 @@ import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.text.format.Formatter;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.yp.androidtrafficmonitor.R;
 import com.example.yp.androidtrafficmonitor.beans.AppInfo;
 import com.example.yp.androidtrafficmonitor.service.TrafficMonitorService;
+import com.example.yp.androidtrafficmonitor.service.TrafficSpeedService;
+import com.example.yp.androidtrafficmonitor.ui.CircleView;
+import com.example.yp.androidtrafficmonitor.ui.FloatView;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,10 +52,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button settingBtn;
     private Button interConnMonitorBtn;
     private Button lineChartBtn;
-    private TextView uidTraffic;
+    private TextView trafficUseTV;
     private TextView allTrafficTV;
-
-    SharedPreferences sharedPreferences;
+    private CircleView mCircleView;
+    FloatView view;
+    SharedPreferences trafficSP;
+    SharedPreferences settingSP;
 
     private long trafficTemp;
 
@@ -55,29 +68,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void handleMessage(Message msg) {
             //allTrafficTV.setText(Formatter.formatFileSize(getApplicationContext(),traffic)+",其中手机流量为"+Formatter.formatFileSize(getApplicationContext(),mobile));
             if(msg.what == 1){
-                allTrafficTV.setText(Formatter.formatFileSize(getApplicationContext(),mobileTraffic));
+                //allTrafficTV.setText(Formatter.formatFileSize(getApplicationContext(),));
+                //view.tv_show.setText("网速");
+                //Log.v("USE",mobileTraffic + "/" + settingSP.getString("通用流量","0") + "M");
+                long allGenTraffic = settingSP.getLong("通用流量",0);
+                trafficUseTV.setText(Formatter.formatFileSize(getApplicationContext(),mobileTraffic) + "/" + Formatter.formatFileSize(getApplicationContext(),allGenTraffic));
+                mCircleView.setmWaterLevel((float) mobileTraffic / allGenTraffic);
             }
         }
     };
 
 
-    ArrayList<AppInfo> appList = new ArrayList<AppInfo>();
-
-
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        Intent intent = new Intent(MainActivity.this,TrafficMonitorService.class);
-        startService(intent);
-
         setContentView(R.layout.menu_layout);
+
+        //createFloatView();
         /*getAppTrafficList();
         Intent intent = new Intent(MainActivity.this,TrafficMonitorBindService.class);
         intent.putExtra("applist",appList);
         bindService(intent, conn, Service.BIND_AUTO_CREATE);*/
-        Init();
-        sharedPreferences = getSharedPreferences("trafficInfor", Context.MODE_PRIVATE);
+        initView();
+        initService();
+        trafficSP = getSharedPreferences("trafficInfor", Context.MODE_PRIVATE);
+        settingSP = getSharedPreferences("settingInfor", Context.MODE_PRIVATE);
 
 
         new Thread(new Runnable() {
@@ -85,7 +100,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void run() {
                 while(true){
                 //traffic = sharedPreferences.getLong("traffic",0);
-                mobileTraffic = sharedPreferences.getLong("mobile",0);
+                mobileTraffic = trafficSP.getLong("mobile",0);
+                    Log.v("mobileTraffic",mobileTraffic+"");
+                    Log.v("mobileTemp",mobileTemp+"");
                 if(mobileTraffic!=mobileTemp) {
                     mobileTemp = mobileTraffic;
                     Message msg = new Message();
@@ -106,7 +123,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    void Init(){
+    void initService(){
+        ActivityManager mActivityManager = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
+        List<ActivityManager.RunningServiceInfo> mServiceList = mActivityManager.getRunningServices(30);
+        if(!ServiceIsStart(mServiceList,"com.example.yp.androidtrafficmonitor.service.TrafficSpeedService"))
+            startService(new Intent(MainActivity.this,TrafficMonitorService.class));
+        if(!ServiceIsStart(mServiceList,"com.example.yp.androidtrafficmonitor.service.TrafficMonitorService"))
+            startService(new Intent(MainActivity.this, TrafficSpeedService.class));
+    }
+
+    void initView(){
         showBtn=(Button) findViewById(R.id.trafficMonitorBtn);
         queryTrafficBtn = (Button) findViewById(R.id.queryTraffic);
         aboutUsBtn = (Button) findViewById(R.id.aboutUs);
@@ -114,8 +140,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         interConnMonitorBtn = (Button) findViewById(R.id.interConnMonitorBtn);
         lineChartBtn = (Button) findViewById(R.id.lineChartBtn);
 
-        allTrafficTV = (TextView) findViewById(R.id.allTraffic);
-        uidTraffic = (TextView) findViewById(R.id.uidTraffic);
+        //allTrafficTV = (TextView) findViewById(R.id.allTraffic);
+        trafficUseTV = (TextView) findViewById(R.id.trafficUseTV);
+        mCircleView = (CircleView) findViewById(R.id.wave_view);
+        mCircleView.setmWaterLevel(0.1F);
+        // 开始执行
+        mCircleView.startWave();
 
         aboutUsBtn.setOnClickListener(this);
         showBtn.setOnClickListener(this);
@@ -216,9 +246,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if(mat.find()){
                 String st = mat.group();
                 Log.v("ObserverLast1",st);
-                mobileTraffic = Long.valueOf(st.substring(2,st.length()))*1024*1024;
-                SharedPreferences.Editor editor = sharedPreferences.edit();
+                mobileTraffic = Long.valueOf(st.substring(2,st.length()-4))*1024*1024;
+                SharedPreferences.Editor editor = trafficSP.edit();
                 editor.putLong("mobile",mobileTraffic);
+                editor.commit();
                 Message msg = new Message();
                 msg.what = 1;
                 handler.sendMessage(msg);
@@ -233,6 +264,64 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
+
+    /*public LinearLayout mFloatLayout;
+    public WindowManager.LayoutParams wmParams;
+    public WindowManager mWindowManager;
+    public TextView mFloatView;
+
+    private void createFloatView() {
+        wmParams = new WindowManager.LayoutParams();
+        mWindowManager = (WindowManager) getApplication().getSystemService(getApplication().WINDOW_SERVICE);
+        wmParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;// 设置window
+        // type为TYPE_SYSTEM_ALERT
+        wmParams.format = PixelFormat.RGBA_8888;// 设置图片格式，效果为背景透明
+        wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;// 设置浮动窗口不可聚焦（实现操作除浮动窗口外的其他可见窗口的操作）
+        wmParams.gravity = Gravity.LEFT | Gravity.TOP;// 默认位置：左上角
+        wmParams.width = 100;
+        wmParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        wmParams.x = 100;// 设置x、y初始值，相对于gravity
+        wmParams.y = 10;
+        // 获取浮动窗口视图所在布局
+        LayoutInflater inflater = LayoutInflater.from(getApplication());
+        mFloatLayout = (LinearLayout) inflater.inflate(R.layout.traffic_float_view, null);
+        mWindowManager.addView(mFloatLayout, wmParams);// 添加mFloatLayout
+        mFloatView = (TextView) mFloatLayout.findViewById(R.id.floatTv);
+        mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        // 设置监听浮动窗口的触摸移动
+        mFloatView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                // getRawX是触摸位置相对于屏幕的坐标，getX是相对于按钮的坐标
+                wmParams.x = (int) event.getRawX() - mFloatView.getMeasuredWidth() / 2;
+                Log.i("TAG", "RawX" + event.getRawX());
+                Log.i("TAG", "X" + event.getX());
+                wmParams.y = (int) event.getRawY() - mFloatView.getMeasuredHeight() / 2 - 25;// 减25为状态栏的高度
+                Log.i("TAG", "RawY" + event.getRawY());
+                Log.i("TAG", "Y" + event.getY());
+                mWindowManager.updateViewLayout(mFloatLayout, wmParams);// 刷新
+                return false; // 此处必须返回false，否则OnClickListener获取不到监听
+            }
+        });
+        mFloatView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View arg0) {
+                // do something... 跳转到应用
+            }
+        });
+    }*/
+
+    //通过Service的类名来判断是否启动某个服务　
+    private boolean ServiceIsStart(List<ActivityManager.RunningServiceInfo> mServiceList,String className){
+       for(int i = 0; i < mServiceList.size(); i ++){
+           Log.v("ServiceStart",mServiceList.get(i).service.getClassName());
+             if(className.equals(mServiceList.get(i).service.getClassName())){
+                return true;
+             }
+       }
+        return false;
+    }
 
 }
 

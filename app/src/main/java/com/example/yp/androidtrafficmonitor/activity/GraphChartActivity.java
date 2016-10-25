@@ -48,12 +48,12 @@ public class GraphChartActivity extends AppCompatActivity{
         for(int i = 1 ; i<=getCurrentDay(); i++) {
             SharedPreferences sp = getSharedPreferences("trafficInfor", Context.MODE_PRIVATE);
 
-            float x = sp.getLong(String.valueOf(i),0)/1024; //获取value值
+            float x = sp.getLong(String.valueOf(i),0)/1024/1024; //获取value值
             yVals.add(new Entry(x, i));//创建Entry并且添加到Y值的list中，Y轴的值，一个entry代表一个显示的值
             xVals.add( i + "号");//横坐标显示xxx月
         }
 
-        dataSet = new LineDataSet(yVals, "金额");//创建数据集并设置标签
+        dataSet = new LineDataSet(yVals, "流量");//创建数据集并设置标签
 
         //dataSet.setColors(ColorTemplate.COLORFUL_COLORS);//设置数据集显示的颜色，预支颜色模版ColorTemplate，也可以设置单一颜色和colors
         dataSet.setColors(ColorTemplate.JOYFUL_COLORS);
@@ -83,7 +83,6 @@ public class GraphChartActivity extends AppCompatActivity{
     public int getCurrentDay(){
         SimpleDateFormat sf = new SimpleDateFormat("dd");
         Calendar c = Calendar.getInstance();
-
         return Integer.valueOf(sf.format(c.getTime()));
     }
 

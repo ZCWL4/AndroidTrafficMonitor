@@ -1,6 +1,7 @@
 package com.example.yp.androidtrafficmonitor.activity;
 
 import android.content.Context;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -30,6 +32,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     private SharedPreferences sp;
     private SharedPreferences.Editor editor;
     private String st;
+    private EditText genTrafficET;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +42,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         sureBtn = (Button) findViewById(R.id.surBtn);
         backBtn.setOnClickListener(this);
         sureBtn.setOnClickListener(this);
+        genTrafficET = (EditText) findViewById(R.id.genTrafficET);
         arrayList = new ArrayList<String>();
         arrayList.add("中国移动");
         arrayList.add("中国联通");
@@ -77,8 +81,9 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         editor.putString("运营商",st);
         editor.putInt("月结日",0);
         editor.putInt("流量警戒值",0);
-        editor.putInt("通用流量",0);
+        editor.putLong("通用流量", 1024*1024*Long.valueOf(genTrafficET.getText().toString().trim()));
         editor.putInt("闲时流量",0);
+        editor.commit();
         Toast.makeText(getApplicationContext(),"保存成功", Toast.LENGTH_SHORT).show();
     }
 

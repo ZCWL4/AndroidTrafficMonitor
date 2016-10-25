@@ -24,12 +24,13 @@ import java.util.Set;
 public class TrafficUtil {
 
     public static int appAccount;
-    public static ArrayList<AppInfo> appInfoArrayList = new ArrayList<>();
+    public static ArrayList<AppInfo> appInfoArrayList;
 
 
-    public static void startMonitor(Context context){
+    public synchronized static void startMonitor(Context context){
         Log.v("Flg---------------","startMonitor");
         AppInfo appInfo;
+        appInfoArrayList = new ArrayList<>();
         //获取所有的安装在手机上的应用软件的信息，并且获取这些软件里面的权限信息
         PackageManager pm=context.getPackageManager();//获取系统应用包管理
         //获取每个包内的androidmanifest.xml信息，它的权限等等
@@ -59,16 +60,16 @@ public class TrafficUtil {
                         appInfo.packageName = packeageName;
                         appInfo.traffic= rx+tx;
 
-                        //appInfoArrayList.add(appInfo);
+                       appInfoArrayList.add(appInfo);
 
-                        if(UidTrafficdDB.isExistUid(context,appInfo)){
+                        /*if(UidTrafficdDB.isExistUid(context,appInfo)){
                             UidTrafficdDB.update(context,appInfo,"ViceTraffic");
                         }
                         else {
 
 
                             UidTrafficdDB.insert(context,appInfo,"ViceTraffic");
-                        }
+                        }*/
 
                         //Drawable appIcon = info.applicationInfo.loadIcon(context.getPackageManager());
 
@@ -81,7 +82,7 @@ public class TrafficUtil {
                 }
             }
         }
-
+        UidTrafficdDB.saveToMainDB(context,appInfoArrayList,"MainTraffic");
         //uidTraffic.setText(result);
     }
 
