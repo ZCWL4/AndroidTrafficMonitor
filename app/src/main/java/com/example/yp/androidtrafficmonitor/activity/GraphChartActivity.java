@@ -48,8 +48,8 @@ public class GraphChartActivity extends AppCompatActivity{
         for(int i = 1 ; i<=getCurrentDay(); i++) {
             SharedPreferences sp = getSharedPreferences("trafficInfor", Context.MODE_PRIVATE);
 
-            float x = sp.getLong(String.valueOf(i),0)/1024/1024; //获取value值
-            yVals.add(new Entry(x, i));//创建Entry并且添加到Y值的list中，Y轴的值，一个entry代表一个显示的值
+            float x = sp.getLong(String.valueOf(i),0)/1024/1024; //获取value值,MB
+            yVals.add(new Entry(x, i-1));//创建Entry并且添加到Y值的list中，Y轴的值，一个entry代表一个显示的值
             xVals.add( i + "号");//横坐标显示xxx月
         }
 

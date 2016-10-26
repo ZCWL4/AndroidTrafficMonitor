@@ -31,23 +31,49 @@
             android:layout_centerInParent="true"
             android:text="测试"
             android:textColor="@android:color/white" />
-        <!--TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="30dp"
-            android:textStyle="normal"
-            android:gravity="center"
-            android:text="本月已用流量"
-            />
-        <TextView
-            android:id="@+id/allTraffic"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="30dp"
-            android:textStyle="normal"
-            android:gravity="center"
-            android:text="0M"
-            /-->
+
+            <Switch
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="悬浮窗"
+                android:id="@+id/FloatSwitch"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true" />
+
+            <Switch
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="数据"
+                android:checked="true"
+                android:id="@+id/mobileSwitch"
+                android:layout_below="@+id/FloatSwitch"
+                android:layout_alignParentEnd="true" />
+
+            <Switch
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="wifi"
+                android:checked="false"
+                android:id="@+id/wifiSwitch"
+                android:layout_below="@+id/mobileSwitch"
+                android:layout_alignParentEnd="true" />
+            <!--TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="30dp"
+                android:textStyle="normal"
+                android:gravity="center"
+                android:text="本月已用流量"
+                />
+            <TextView
+                android:id="@+id/allTraffic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="30dp"
+                android:textStyle="normal"
+                android:gravity="center"
+                android:text="0M"
+                /-->
         </RelativeLayout>
     </LinearLayout>
 

@@ -43,6 +43,10 @@ public class FloatView {
         this.mContext = context;
     }
 
+    public void destroy(){
+        mWManger.removeView(view);
+    }
+
     /**
      * 初始化mWManger,mWManParams
      */

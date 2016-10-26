@@ -18,10 +18,10 @@ public class BootBroadcast extends BroadcastReceiver {
         Log.v("Broadcast","BootBroadcast");
         Intent intent = new Intent(context , ServiceForBroadcast.class);
         context.startService(intent);
-        SharedPreferences sp = context.getSharedPreferences("test1", Context.MODE_PRIVATE);
+        /*SharedPreferences sp = context.getSharedPreferences("test1", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
         editor.putInt("test",9);
-        editor.commit();
+        editor.commit();*/
         context.startService(new Intent(context,TrafficMonitorService.class));
         context.startService(new Intent(context, TrafficSpeedService.class));
 

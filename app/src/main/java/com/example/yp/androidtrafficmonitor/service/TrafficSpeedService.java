@@ -1,13 +1,16 @@
 package com.example.yp.androidtrafficmonitor.service;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.net.TrafficStats;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
+import android.view.WindowManager;
 
+import com.example.yp.androidtrafficmonitor.application.AppApplication;
 import com.example.yp.androidtrafficmonitor.ui.FloatView;
 
 import java.math.BigDecimal;
@@ -19,6 +22,7 @@ public class TrafficSpeedService extends Service {
     private long preTime = 0;
     private FloatView view;
     private Handler handler;
+    //private boolean isSwitchFloat;
 
     public TrafficSpeedService() {
     }
@@ -27,15 +31,14 @@ public class TrafficSpeedService extends Service {
     public void onCreate() {
         Log.v("onCreate","onCreate");
         super.onCreate();
-        view = new FloatView(this);
+        view = new FloatView(TrafficSpeedService.this);
         view.show();
-
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
+        //isSwitchFloat = intent.getBooleanExtra("SwitchFloat",false);
+        return null;
     }
 
     @Override
@@ -49,7 +52,10 @@ public class TrafficSpeedService extends Service {
                 if(msg.what == 1){
                     String result = getNetSpeed();
                     Log.v("getNetSpeed",result);
-                    view.setSpeedView(result);
+                    if(view!=null){
+                        view.setSpeedView(result);
+                    }
+
                 }
 
             }
@@ -70,14 +76,27 @@ public class TrafficSpeedService extends Service {
                     }
                     //preRxBytes = TrafficStats.getTotalRxBytes();;
                     //preTime = System.currentTimeMillis();
-                    Message msg = new Message();
-                    msg.what = 1;
-                    handler.sendMessage(msg);
+
+
+                        Message msg = new Message();
+                        msg.what = 1;
+                        handler.sendMessage(msg);
+
                 }
             }
         }).start();
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(view!=null){
+            //WindowManager windowManager = (WindowManager)getSystemService(Context.WINDOW_SERVICE);
+            //windowManager.removeView(view);
+            view.destroy();
+        }
+
+    }
 
     public String getNetSpeed() {
         long curRxBytes =  TrafficStats.getTotalRxBytes();

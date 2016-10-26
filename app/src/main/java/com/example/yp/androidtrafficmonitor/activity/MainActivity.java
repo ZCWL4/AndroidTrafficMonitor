@@ -1,10 +1,13 @@
 package com.example.yp.androidtrafficmonitor.activity;
 
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.SearchableInfo;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -12,7 +15,9 @@ import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.PixelFormat;
+import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -28,23 +33,27 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.yp.androidtrafficmonitor.R;
+import com.example.yp.androidtrafficmonitor.application.AppApplication;
 import com.example.yp.androidtrafficmonitor.beans.AppInfo;
 import com.example.yp.androidtrafficmonitor.service.TrafficMonitorService;
 import com.example.yp.androidtrafficmonitor.service.TrafficSpeedService;
 import com.example.yp.androidtrafficmonitor.ui.CircleView;
 import com.example.yp.androidtrafficmonitor.ui.FloatView;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,CompoundButton.OnCheckedChangeListener {
 
     private Button showBtn;
     private Button queryTrafficBtn;
@@ -52,15 +61,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button settingBtn;
     private Button interConnMonitorBtn;
     private Button lineChartBtn;
+    private Switch floatStBtn;
+    private Switch mobileStBtn;
+    private Switch wifiStBtn;
+
     private TextView trafficUseTV;
     private TextView allTrafficTV;
     private CircleView mCircleView;
-    FloatView view;
-    SharedPreferences trafficSP;
-    SharedPreferences settingSP;
+
+
+
+    private SharedPreferences trafficSP;
+    private SharedPreferences settingSP;
+
+
+    private FloatView floatView;
+    private boolean isSwitchFloat = false;
 
     private long trafficTemp;
-
     private long mobileTraffic;
     private long mobileTemp;
     private Handler handler = new Handler(){
@@ -84,13 +102,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.menu_layout);
 
+        initView();
+        initService();
+
+
         //createFloatView();
         /*getAppTrafficList();
         Intent intent = new Intent(MainActivity.this,TrafficMonitorBindService.class);
         intent.putExtra("applist",appList);
         bindService(intent, conn, Service.BIND_AUTO_CREATE);*/
-        initView();
-        initService();
         trafficSP = getSharedPreferences("trafficInfor", Context.MODE_PRIVATE);
         settingSP = getSharedPreferences("settingInfor", Context.MODE_PRIVATE);
 
@@ -98,17 +118,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         new Thread(new Runnable() {
             @Override
             public void run() {
-                while(true){
-                //traffic = sharedPreferences.getLong("traffic",0);
-                mobileTraffic = trafficSP.getLong("mobile",0);
-                    Log.v("mobileTraffic",mobileTraffic+"");
-                    Log.v("mobileTemp",mobileTemp+"");
-                if(mobileTraffic!=mobileTemp) {
-                    mobileTemp = mobileTraffic;
-                    Message msg = new Message();
-                    msg.what = 1;
-                    handler.sendMessage(msg);
-                }
+                while (true) {
+                    //traffic = sharedPreferences.getLong("traffic",0);
+                    mobileTraffic = trafficSP.getLong("mobile", 0);
+                    Log.v("mobileTraffic", mobileTraffic + "");
+                    Log.v("mobileTemp", mobileTemp + "");
+                    if (mobileTraffic != mobileTemp) {
+                        mobileTemp = mobileTraffic;
+                        Message msg = new Message();
+                        msg.what = 1;
+                        handler.sendMessage(msg);
+                    }
                     try {
                         Thread.sleep(5000);
                     } catch (InterruptedException e) {
@@ -117,19 +137,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         }).start();
-
-
-
-
     }
 
     void initService(){
         ActivityManager mActivityManager = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
         List<ActivityManager.RunningServiceInfo> mServiceList = mActivityManager.getRunningServices(30);
-        if(!ServiceIsStart(mServiceList,"com.example.yp.androidtrafficmonitor.service.TrafficSpeedService"))
+        if(!ServiceIsStart(mServiceList,"com.example.yp.androidtrafficmonitor.service.TrafficSpeedService")){
             startService(new Intent(MainActivity.this,TrafficMonitorService.class));
-        if(!ServiceIsStart(mServiceList,"com.example.yp.androidtrafficmonitor.service.TrafficMonitorService"))
-            startService(new Intent(MainActivity.this, TrafficSpeedService.class));
+        }
+
     }
 
     void initView(){
@@ -139,6 +155,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         settingBtn = (Button) findViewById(R.id.setting);
         interConnMonitorBtn = (Button) findViewById(R.id.interConnMonitorBtn);
         lineChartBtn = (Button) findViewById(R.id.lineChartBtn);
+        floatStBtn = (Switch) findViewById(R.id.FloatSwitch);
+        mobileStBtn = (Switch) findViewById(R.id.mobileSwitch);
+        wifiStBtn = (Switch) findViewById(R.id.wifiSwitch);
 
         //allTrafficTV = (TextView) findViewById(R.id.allTraffic);
         trafficUseTV = (TextView) findViewById(R.id.trafficUseTV);
@@ -153,6 +172,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         settingBtn.setOnClickListener(this);
         interConnMonitorBtn.setOnClickListener(this);
         lineChartBtn.setOnClickListener(this);
+        floatStBtn.setOnCheckedChangeListener(this);
+        mobileStBtn.setOnCheckedChangeListener(this);
+        wifiStBtn.setOnCheckedChangeListener(this);
     }
 
 
@@ -210,6 +232,53 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        Log.v("Switch","Switch");
+        switch (buttonView.getId()){
+            case R.id.FloatSwitch:{
+                if (isChecked) {
+                    startService(new Intent(MainActivity.this, TrafficSpeedService.class));
+                } else {
+                    stopService(new Intent(MainActivity.this, TrafficSpeedService.class));
+                }
+                break;
+            }
+            case R.id.mobileSwitch:{
+                /*ConnectivityManager cwjManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                if(!isChecked){
+                        ConnectivityManager connectivityManager = null;
+                        Class connectivityManagerClz = null;
+                        try {
+                            connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+                            connectivityManagerClz = connectivityManager.getClass();
+                            Method method = connectivityManagerClz.getMethod(
+                                    "setMobileDataEnabled", new Class[] { boolean.class });
+                            method.invoke(connectivityManager, false);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+
+                }*/
+                break;
+            }
+            case R.id.wifiSwitch:{
+                WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                if(!isChecked){
+
+                    wifiManager.setWifiEnabled(false);
+                }
+                else {
+                    wifiManager.setWifiEnabled(true);
+                }
+
+                break;
+            }
+        }
+    }
+
+
     void sendMessage(){
     String phone_number = "10086";
     String sms_content = "cxll";
@@ -221,6 +290,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Uri.parse("content://sms"), true, new SmsObserver(new Handler()));
         Log.v("Observer","StartObserver");
 }
+
 
     private class SmsObserver extends ContentObserver {
 

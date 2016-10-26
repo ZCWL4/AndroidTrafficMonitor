@@ -9,6 +9,7 @@ import android.content.Context;
 public class AppApplication extends Application{
     private static Application application = new AppApplication();
     private Context context;
+    public static boolean isSwitchFloat = false;
 
     public static Context getContext() {
         return application.getApplicationContext();

@@ -15,6 +15,7 @@ import com.example.yp.androidtrafficmonitor.utils.TrafficUtil;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Random;
 
 public class TrafficMonitorService extends Service {
 
@@ -32,10 +33,15 @@ public class TrafficMonitorService extends Service {
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.v("TrafficService","startCommand");
+    public void onCreate() {
+        super.onCreate();
         sp = getSharedPreferences("trafficInfor", Context.MODE_PRIVATE);
         editor = sp.edit();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.v("TrafficService","startCommand");
         startMonitor(this);
         //UidTrafficdDB.query(getApplicationContext());
 
@@ -60,9 +66,14 @@ public class TrafficMonitorService extends Service {
                     TrafficUtil.startMonitor(context);
                     mobileTraffic = TrafficStats.getMobileRxBytes()+TrafficStats.getMobileTxBytes();
                     long mobile = mobileTraffic - mobileTemp;
+                    Log.v("Mobile",mobileTraffic+" "+mobileTemp);
                     mobileTemp = mobileTraffic;
                     int nowDay = getCurrentDay();
                     editor.putLong("mobile", mobile + sp.getLong("mobile",0));
+                    /*for(long i=1; i<25; i++){
+                        editor.putLong(String.valueOf(i), new Random().nextInt(25) *1024*1024);
+                    }*/
+
                     editor.putLong(String.valueOf(nowDay),mobile+sp.getLong(String.valueOf(nowDay),0));
                     editor.commit();
                     try {
