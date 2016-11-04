@@ -70,8 +70,8 @@ public class TrafficMonitorService extends Service {
                     mobileTemp = mobileTraffic;
                     int nowDay = getCurrentDay();
                     editor.putLong("mobile", mobile + sp.getLong("mobile",0));
-                    /*for(long i=1; i<25; i++){
-                        editor.putLong(String.valueOf(i), new Random().nextInt(25) *1024*1024);
+                    /*for(long i=1; i<28; i++){
+                        editor.putLong(String.valueOf(i), new Random().nextInt(20) *1024*1024);
                     }*/
 
                     editor.putLong(String.valueOf(nowDay),mobile+sp.getLong(String.valueOf(nowDay),0));

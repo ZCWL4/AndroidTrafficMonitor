@@ -25,6 +25,7 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
+import android.telephony.TelephonyManager;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Gravity;
@@ -245,6 +246,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             }
             case R.id.mobileSwitch:{
+                setDataConnectionState(this,false);
                 /*ConnectivityManager cwjManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
                 if(!isChecked){
                         ConnectivityManager connectivityManager = null;
@@ -391,6 +393,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
              }
        }
         return false;
+    }
+
+    public void setDataConnectionState(Context cxt, boolean state) {
+
+        TelephonyManager telephonyManager = (TelephonyManager) getApplicationContext().getSystemService(Context.TELEPHONY_SERVICE);;
+        Class telephonyManagerClass = null;
+        try {
+            telephonyManagerClass = Class.forName(telephonyManager.getClass().getName());
+        Method getITelephonyMethod = null;
+
+            getITelephonyMethod = telephonyManagerClass
+                    .getDeclaredMethod("getITelephony");
+        getITelephonyMethod.setAccessible(false);
+        Object ITelephonyStub = getITelephonyMethod.invoke(telephonyManager);
+        Class ITelephonyClass = Class.forName(ITelephonyStub.getClass().getName());
+        }
+        catch(Exception e){
+
+            }
+        /*ConnectivityManager connectivityManager = null;
+        Class connectivityManagerClz = null;
+        try {
+            connectivityManager = (ConnectivityManager) cxt
+                    .getSystemService("connectivity");
+            connectivityManagerClz = connectivityManager.getClass();
+            Method method = connectivityManagerClz.getMethod(
+                    "setMobileDataEnabled", new Class[] { boolean.class });
+            method.invoke(connectivityManager, state);
+            Log.v("setDataConnectionState","setDataConnectionState");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
     }
 
 }

@@ -145,7 +145,7 @@ public class UidTrafficdDB {
         SQLiteDatabase mainDB = mainDBHelper.getReadableDatabase();
         SQLiteDatabase viceDB = viceDBHelper.getWritableDatabase();
 
-        Cursor cursor = mainDB.query(viceDBName,null,null,null,null,null,null);
+        Cursor cursor = mainDB.query(mainDBName,null,null,null,null,null,null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 //从副数据库中获取traffic

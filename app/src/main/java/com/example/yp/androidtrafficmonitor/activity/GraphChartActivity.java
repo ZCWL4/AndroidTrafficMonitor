@@ -6,6 +6,9 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.example.yp.androidtrafficmonitor.R;
@@ -48,29 +51,47 @@ public class GraphChartActivity extends AppCompatActivity{
         for(int i = 1 ; i<=getCurrentDay(); i++) {
             SharedPreferences sp = getSharedPreferences("trafficInfor", Context.MODE_PRIVATE);
 
-            float x = sp.getLong(String.valueOf(i),0)/1024/1024; //获取value值,MB
+            long x = sp.getLong(String.valueOf(i),0)/1024/1024; //获取value值,MB
             yVals.add(new Entry(x, i-1));//创建Entry并且添加到Y值的list中，Y轴的值，一个entry代表一个显示的值
             xVals.add( i + "号");//横坐标显示xxx月
         }
 
-        dataSet = new LineDataSet(yVals, "流量");//创建数据集并设置标签
+        dataSet = new LineDataSet(yVals, "流量(单位MB)");//创建数据集并设置标签
 
         //dataSet.setColors(ColorTemplate.COLORFUL_COLORS);//设置数据集显示的颜色，预支颜色模版ColorTemplate，也可以设置单一颜色和colors
-        dataSet.setColors(ColorTemplate.JOYFUL_COLORS);
-        dataSet.setHighlightEnabled(true);//设置高亮
-        dataSet.setValueTextColor(Color.BLUE);//设置Value值的显示文字颜色，字体大小和字体种类，这里我没有添加对应字体可以自己修改
 
-        dataSet.setValueTextSize(10.0f);
-        dataSet.setValueTypeface(null);
 
         data = new LineData(xVals, dataSet);//创建LineData,x轴List和Y轴数据集为参数
         chart.setBorderColor(Color.GRAY);
         chart.setDrawGridBackground(false);
+
+
+        // set the line to be drawn like this "- - - - - -"
+        dataSet.enableDashedLine(10f, 5f, 0f);
+        dataSet.setColor(Color.BLACK);
+        dataSet.setCircleColor(Color.BLACK);
+        dataSet.setLineWidth(1f);
+        dataSet.setCircleSize(3f);
+        dataSet.setDrawCircleHole(false);
+        dataSet.setValueTextSize(9f);
+        dataSet.setFillAlpha(65);
+        dataSet.setFillColor(Color.BLACK);
+
+        /*dataSet.setColors(new int[]{Color.GRAY});
+        dataSet.setHighlightEnabled(true);//设置高亮
+        dataSet.setValueTextColor(Color.BLUE);//设置Value值的显示文字颜色，字体大小和字体种类，这里我没有添加对应字体可以自己修改
+
+        dataSet.setValueTextSize(10.0f);
+        dataSet.setValueTypeface(null);*/
+
         chart.setData(data);//给图表添加数据
         chart.setDescription("流量使用");//设置图表描述的内容位置，字体等等
-        chart.setDescriptionColor(Color.GREEN);
+        chart.setDescriptionColor(Color.BLACK);
         chart.setDescriptionTextSize(15f);
-        chart.setDescriptionPosition(540, 40);
+        WindowManager manager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        Display display = manager.getDefaultDisplay();
+        Log.v("display.getWidth()/2",display.getWidth()/2+"");
+        chart.setDescriptionPosition(600, 40);
 
         chart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);//设置X轴的显示位置，通过XAxisPosition枚举类型来设置
         chart.getXAxis().setAxisMinValue(0.0f);//设置X轴的最小值
