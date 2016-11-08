@@ -68,6 +68,7 @@
             <EditText
                 android:inputType="date|number"
                 android:layout_width="match_parent"
+                android:id="@+id/monthDayET"
                 android:layout_height="40dp"
                 android:background="@drawable/edit_frame_shape" />
         </LinearLayout>
@@ -86,6 +87,7 @@
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
+                android:id="@+id/alarmTrafficET"
                 android:background="@drawable/edit_frame_shape" />
 
         </LinearLayout>
@@ -125,6 +127,7 @@
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
+                android:id="@+id/freeTrafficET"
                 android:background="@drawable/edit_frame_shape"
                 android:inputType="number" />
         </LinearLayout>

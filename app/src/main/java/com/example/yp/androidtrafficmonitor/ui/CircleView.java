@@ -59,6 +59,13 @@ public class CircleView extends View {
     private String flowNum = "";
     private String flowLeft = "还剩余";
 
+    public void changeWaveColor(int color){
+        mWavePaint = new Paint();
+        mWavePaint.setStrokeWidth(1.0F);
+        mWavePaint.setColor(color);
+        mWavePaint.setAlpha(mAlpha);
+    }
+
     /**
      * @param context
      */

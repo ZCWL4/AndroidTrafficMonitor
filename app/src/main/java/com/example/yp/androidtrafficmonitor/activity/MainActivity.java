@@ -12,8 +12,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.net.ConnectivityManager;
 import android.net.Uri;
@@ -22,6 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
@@ -94,6 +97,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 trafficUseTV.setText(Formatter.formatFileSize(getApplicationContext(),mobileTraffic) + "/" + Formatter.formatFileSize(getApplicationContext(),allGenTraffic));
                 mCircleView.setmWaterLevel((float) mobileTraffic / allGenTraffic);
             }
+            if(msg.what == 2){
+                Log.v("changColor","Red");
+                mCircleView.changeWaveColor(Color.RED);
+            }
+            if(msg.what == -2){
+                Log.v("changColor","White");
+                mCircleView.changeWaveColor(Color.WHITE);
+            }
         }
     };
 
@@ -130,6 +141,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         msg.what = 1;
                         handler.sendMessage(msg);
                     }
+                    //Log.v("流量警戒值",settingSP.getString("流量警戒值","2048"));
+                    if (mobileTraffic / 1024 / 1024 > settingSP.getInt("流量警戒值", 2048)) {
+                        Message msg = new Message();
+                        msg.what = 2;
+                        handler.sendMessage(msg);
+                    } else if  (mobileTraffic / 1024 / 1024 < settingSP.getInt("流量警戒值", 2048)) {
+                        Message msg = new Message();
+                        msg.what = -2;
+                        handler.sendMessage(msg);
+                    }
                     try {
                         Thread.sleep(5000);
                     } catch (InterruptedException e) {
@@ -140,6 +161,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }).start();
     }
 
+    //初始化网速的service
     void initService(){
         ActivityManager mActivityManager = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
         List<ActivityManager.RunningServiceInfo> mServiceList = mActivityManager.getRunningServices(30);
@@ -160,11 +182,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mobileStBtn = (Switch) findViewById(R.id.mobileSwitch);
         wifiStBtn = (Switch) findViewById(R.id.wifiSwitch);
 
-        //allTrafficTV = (TextView) findViewById(R.id.allTraffic);
+        //水纹球的调用代码
         trafficUseTV = (TextView) findViewById(R.id.trafficUseTV);
         mCircleView = (CircleView) findViewById(R.id.wave_view);
         mCircleView.setmWaterLevel(0.1F);
-        // 开始执行
         mCircleView.startWave();
 
         aboutUsBtn.setOnClickListener(this);
@@ -246,23 +267,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             }
             case R.id.mobileSwitch:{
-                setDataConnectionState(this,false);
-                /*ConnectivityManager cwjManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                if(!isChecked){
-                        ConnectivityManager connectivityManager = null;
-                        Class connectivityManagerClz = null;
-                        try {
-                            connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-                            connectivityManagerClz = connectivityManager.getClass();
-                            Method method = connectivityManagerClz.getMethod(
-                                    "setMobileDataEnabled", new Class[] { boolean.class });
-                            method.invoke(connectivityManager, false);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                //setDataConnectionState(this,false);
 
-
-                }*/
                 break;
             }
             case R.id.wifiSwitch:{
@@ -280,8 +286,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-
+    //发送短信
     void sendMessage(){
+
     String phone_number = "10086";
     String sms_content = "cxll";
     SmsManager smsManager = SmsManager.getDefault();
@@ -302,6 +309,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             // TODO Auto-generated constructor stub
         }
 
+        //解析短信
         @Override
         public void onChange(boolean selfChange) {
             Log.v("Observer","StartObserver2");
@@ -338,51 +346,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
 
-    /*public LinearLayout mFloatLayout;
-    public WindowManager.LayoutParams wmParams;
-    public WindowManager mWindowManager;
-    public TextView mFloatView;
-
-    private void createFloatView() {
-        wmParams = new WindowManager.LayoutParams();
-        mWindowManager = (WindowManager) getApplication().getSystemService(getApplication().WINDOW_SERVICE);
-        wmParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;// 设置window
-        // type为TYPE_SYSTEM_ALERT
-        wmParams.format = PixelFormat.RGBA_8888;// 设置图片格式，效果为背景透明
-        wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;// 设置浮动窗口不可聚焦（实现操作除浮动窗口外的其他可见窗口的操作）
-        wmParams.gravity = Gravity.LEFT | Gravity.TOP;// 默认位置：左上角
-        wmParams.width = 100;
-        wmParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        wmParams.x = 100;// 设置x、y初始值，相对于gravity
-        wmParams.y = 10;
-        // 获取浮动窗口视图所在布局
-        LayoutInflater inflater = LayoutInflater.from(getApplication());
-        mFloatLayout = (LinearLayout) inflater.inflate(R.layout.traffic_float_view, null);
-        mWindowManager.addView(mFloatLayout, wmParams);// 添加mFloatLayout
-        mFloatView = (TextView) mFloatLayout.findViewById(R.id.floatTv);
-        mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-        // 设置监听浮动窗口的触摸移动
-        mFloatView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                // getRawX是触摸位置相对于屏幕的坐标，getX是相对于按钮的坐标
-                wmParams.x = (int) event.getRawX() - mFloatView.getMeasuredWidth() / 2;
-                Log.i("TAG", "RawX" + event.getRawX());
-                Log.i("TAG", "X" + event.getX());
-                wmParams.y = (int) event.getRawY() - mFloatView.getMeasuredHeight() / 2 - 25;// 减25为状态栏的高度
-                Log.i("TAG", "RawY" + event.getRawY());
-                Log.i("TAG", "Y" + event.getY());
-                mWindowManager.updateViewLayout(mFloatLayout, wmParams);// 刷新
-                return false; // 此处必须返回false，否则OnClickListener获取不到监听
-            }
-        });
-        mFloatView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                // do something... 跳转到应用
-            }
-        });
-    }*/
 
     //通过Service的类名来判断是否启动某个服务　
     private boolean ServiceIsStart(List<ActivityManager.RunningServiceInfo> mServiceList,String className){
@@ -395,7 +358,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return false;
     }
 
-    public void setDataConnectionState(Context cxt, boolean state) {
+    /*public void setDataConnectionState(Context cxt, boolean state) {
 
         TelephonyManager telephonyManager = (TelephonyManager) getApplicationContext().getSystemService(Context.TELEPHONY_SERVICE);;
         Class telephonyManagerClass = null;
@@ -412,20 +375,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         catch(Exception e){
 
             }
-        /*ConnectivityManager connectivityManager = null;
-        Class connectivityManagerClz = null;
-        try {
-            connectivityManager = (ConnectivityManager) cxt
-                    .getSystemService("connectivity");
-            connectivityManagerClz = connectivityManager.getClass();
-            Method method = connectivityManagerClz.getMethod(
-                    "setMobileDataEnabled", new Class[] { boolean.class });
-            method.invoke(connectivityManager, state);
-            Log.v("setDataConnectionState","setDataConnectionState");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
-    }
+
+    }*/
+
 
 }
 

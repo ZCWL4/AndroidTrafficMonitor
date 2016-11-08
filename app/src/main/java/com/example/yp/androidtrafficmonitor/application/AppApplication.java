@@ -1,5 +1,6 @@
 package com.example.yp.androidtrafficmonitor.application;
 
+import android.Manifest;
 import android.app.Application;
 import android.content.Context;
 
@@ -18,6 +19,9 @@ public class AppApplication extends Application{
     @Override
     public void onCreate() {
         super.onCreate();
+        /*Context context = getApplicationContext();
+        if(context.checkSelfPermission(Manifest.permission.SEND_SMS)!= PackageManager.Permission)*/
+
     }
 
     @Override
